@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Full Screen Leaflet Map</title>
+    <meta charset="utf-8" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/leaflet.css"/>
+    <style>
+        body {
+            padding: 0;
+            margin: 0;
+        }
+        html, body, #map {
+            height: 100%;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div id="map"></div>
+
+    <script
+        src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/0.7.7/leaflet.js">
+    </script>
+    <script type="text/javascript" src="//www.gstatic.com/cast/sdk/libs/receiver/2.0.0/cast_receiver.js"></script>
+    <script>
+    
+    window.onload = function() {
+        
+        cast.receiver.logger.setLevelValue(0);
+
+        var tile_layers = new Array()
+        var map = L.map('map').setView([-41.2858, 174.78682], 14);
+        var layer_group = L.layerGroup([]).addTo(map);
+
+        function add_tile_layer(name, id, url, service_name, service_url, max_zoom){
+            var layer = L.tileLayer(url, 
+            { 
+                attribution: '&copy; <a href="'+service_url+'">'+service_name+'</a> Contributors',
+                maxZoom: max_zoom,
+            });
+            tile_layers.push({
+                "name": name,
+                "id": id,
+                "layer": layer
+            })
+            return true;
+        }
+
+        function show_tile_layer(id){
+            for (var i = 0; i < tile_layers.length; i++) 
+            {
+                if (tile_layers[i].id === id){
+                    layer_group.clearLayers()
+                    layer_group.addLayer(tile_layers[i].layer)
+                    return true;
+                }
+            }
+            console.error("Tile Layer with id \""+id+"\"not found");
+            return false;
+        }
+
+        function add_and_show_tile_layer(name, id, url, service_name, service_url, max_zoom){
+            if(add_tile_layer(name, id, url, service_name, service_url, max_zoom)){
+                show_tile_layer(id);
+            }else{
+                console.error("Tile Layer with id \""+id+"\"impossible to create");
+            }
+        }
+
+        function hide_tile_layer(id){
+            for (var i = 0; i < tile_layers.length; i++) 
+            {
+                if (tile_layers[i].id === id){
+                    layer_group.removeLayer(tile_layers[i].layer)
+                    return true;
+                }
+            }
+            console.error("Tile Layer with id \""+id+"\"not found");
+            return false;
+        }
+
+        function remove_tile_layer(id){
+            for (var i = 0; i < tile_layers.length; i++) 
+            {
+                if (tile_layers[i].id === id){
+                    layer_group.removeLayer(tile_layers[i].layer)
+                    tile_layers.splice(i, 1);
+                    return true;
+                }
+            }
+            console.error("Tile Layer with id \""+id+"\"not found");
+            return false;
+        }
+
+        
+
+        var castReceiverManager = cast.receiver.CastReceiverManager.getInstance();
+        castReceiverManager.onReady = function(event) {
+          add_and_show_tile_layer(
+            "Base Layer", 
+            "base_layer", 
+            "http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", 
+            "OpenStreetMap",
+            "http://openstreetmap.org",
+            18);
+        };
+        
+        var customMessageBus = castReceiverManager.getCastMessageBus('urn:x-cast:net.ikeralbeniz.lefletcast');
+        customMessageBus.onMessage = function(event) {
+           alert("message");
+        }
+
+        castReceiverManager.start();
+    };
+
+    </script>
+</body>
+</html>
